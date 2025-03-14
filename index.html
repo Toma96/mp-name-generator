@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secret Santa Draw</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    input, button { margin: 0.5em 0; padding: 0.5em; }
+    #adminPanel { margin-top: 2em; border-top: 1px solid #ccc; padding-top: 1em; display: none; }
+  </style>
+</head>
+<body>
+  <h2>Secret Santa Draw</h2>
+  <input type="text" id="user" placeholder="Enter your name" />
+  <button id="drawBtn">Draw Name</button>
+  <p id="result"></p>
+
+  <!-- Admin panel -->
+  <div id="adminPanel">
+    <h3>Admin Reset Panel</h3>
+    <input type="password" id="adminPassword" placeholder="Enter admin password" />
+    <button id="resetBtn">Reset Draw</button>
+    <p id="resetResult"></p>
+  </div>
+
+  <script>
+    // Only show admin panel if URL contains ?admin=1
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('admin') === '1') {
+        document.getElementById("adminPanel").style.display = "block";
+      }
+    };
+
+    // Draw button click event.
+    document.getElementById("drawBtn").addEventListener("click", () => {
+      const user = document.getElementById("user").value.trim();
+      if (!user) {
+        alert("Please enter your name.");
+        return;
+      }
+      fetch('/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById("result").innerText = "Error: " + data.error;
+        } else {
+          document.getElementById("result").innerText = "You drew: " + data.drawnName;
+        }
+      })
+      .catch(err => console.error(err));
+    });
+
+    // Reset button click event.
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const adminPassword = document.getElementById("adminPassword").value;
+      fetch('/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById("resetResult").innerText = "Error: " + data.error;
+        } else {
+          document.getElementById("resetResult").innerText = data.message;
+          // Clear the user interface for a new round.
+          document.getElementById("result").innerText = "";
+          document.getElementById("user").value = "";
+        }
+      })
+      .catch(err => console.error(err));
+    });
+  </script>
+</body>
+</html>
